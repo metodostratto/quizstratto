@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -372,6 +373,40 @@ function Index() {
   const [displayScore, setDisplayScore] = useState<number>(0);
   const [analyzingPhase, setAnalyzingPhase] = useState<number>(0);
 
+  // Estados de integração e proteção contra múltiplos envios
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
+  const submissionLock = useRef<boolean>(false);
+
+  // Captura automática e persistente de UTMs da URL
+  const [utms, setUtms] = useState<{
+    utm_source: string | null;
+    utm_medium: string | null;
+    utm_campaign: string | null;
+    utm_content: string | null;
+    utm_term: string | null;
+  }>({
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setUtms({
+        utm_source: params.get("utm_source") || null,
+        utm_medium: params.get("utm_medium") || null,
+        utm_campaign: params.get("utm_campaign") || null,
+        utm_content: params.get("utm_content") || null,
+        utm_term: params.get("utm_term") || null,
+      });
+    }
+  }, []);
+
   const score = useMemo(() => {
     return answers.reduce<number>(
       (acc, val) => acc + (val === null ? 0 : POINTS[val] ?? 0),
@@ -496,6 +531,9 @@ function Index() {
     setCurrent(0);
     setLead({ nome: "", empresa: "", whatsapp: "" });
     setDisplayScore(0);
+    setSubmitError(null);
+    setLeadSubmitted(false);
+    submissionLock.current = false;
     setStep("intro");
   };
 
@@ -507,6 +545,97 @@ function Index() {
   const currentQ = QUESTIONS[current];
   const progressRatio = (current + 1) / QUESTIONS.length;
   const classification = classify(score);
+
+  // Submissão ao Supabase com proteção contra duplo envio e UX de erro
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadValid || isSubmitting || submissionLock.current) return;
+
+    setSubmitError(null);
+
+    // Se já foi enviado com sucesso nesta sessão para este lead, avança direto
+    if (leadSubmitted) {
+      setStep("analyzing");
+      return;
+    }
+
+    setIsSubmitting(true);
+    submissionLock.current = true;
+
+    // Montar respostas completas em formato estruturado
+    const respostasPayload = QUESTIONS.map((q, idx) => {
+      const ansIdx = answers[idx];
+      const letter = ansIdx !== null ? String.fromCharCode(65 + ansIdx) : "N/A";
+      const text = ansIdx !== null ? q.options[ansIdx] : "";
+      const pts = ansIdx !== null ? (POINTS[ansIdx] ?? 0) : 0;
+      return {
+        identificador: q.id,
+        pergunta: q.q,
+        alternativa: letter,
+        texto_resposta: text,
+        pontuacao: pts,
+      };
+    });
+
+    // Montar as 3 ações recomendadas geradas
+    const acoesPayload = recommendedActions.map((action, i) => ({
+      ordem: i + 1,
+      categoria: action.category,
+      titulo: action.title,
+      descricao: action.description,
+    }));
+
+    try {
+      const payload: Record<string, unknown> = {
+        nome: lead.nome.trim(),
+        empresa: lead.empresa.trim(),
+        whatsapp: lead.whatsapp.trim(),
+        Score: score,
+        classificacao: classification.label,
+        respostas: respostasPayload,
+        acoes_recomendadas: acoesPayload,
+        utm_source: utms.utm_source,
+        utm_medium: utms.utm_medium,
+        utm_campaign: utms.utm_campaign,
+        utm_content: utms.utm_content,
+        utm_term: utms.utm_term,
+      };
+
+      let { error } = await supabase.from("Leads").insert([payload]);
+
+      // Tratamento resiliente se alguma coluna opcional não existir no schema
+      if (error && error.code === "PGRST204" && error.message) {
+        const match = error.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          const retry = await supabase.from("Leads").insert([payload]);
+          error = retry.error;
+        }
+      }
+
+      if (error) {
+        console.error("Erro ao registrar lead no Supabase:", error);
+        setSubmitError(
+          "Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente."
+        );
+        setIsSubmitting(false);
+        submissionLock.current = false;
+        return;
+      }
+
+      setLeadSubmitted(true);
+      setIsSubmitting(false);
+      submissionLock.current = false;
+      setStep("analyzing");
+    } catch (err) {
+      console.error("Erro inesperado ao registrar lead no Supabase:", err);
+      setSubmitError(
+        "Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente."
+      );
+      setIsSubmitting(false);
+      submissionLock.current = false;
+    }
+  };
 
   // Link inteligente para WhatsApp comercial da Stratto com contexto pronto
   const whatsappUrl = useMemo(() => {
@@ -718,7 +847,7 @@ function Index() {
           </section>
         )}
 
-        {/* STEP: LEAD (Captura antes do resultado) */}
+        {/* STEP: LEAD (Captura antes do resultado com integração Supabase) */}
         {step === "lead" && (
           <section className="animate-rise space-y-6">
             <div className="space-y-2">
@@ -735,15 +864,20 @@ function Index() {
               </p>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (leadValid) {
-                  setStep("analyzing");
-                }
-              }}
-              className="mt-6 space-y-4"
-            >
+            {/* Mensagem de Erro Amigável (sem detalhes técnicos) */}
+            {submitError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 flex items-start gap-3">
+                <span className="text-red-500 font-bold shrink-0 mt-0.5">⚠️</span>
+                <div className="space-y-1">
+                  <p className="font-semibold">{submitError}</p>
+                  <p className="text-xs text-red-700">
+                    Suas respostas estão preservadas. Basta clicar no botão abaixo para tentar novamente.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleLeadSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-1.5">
                   Seu nome completo
@@ -752,8 +886,9 @@ function Index() {
                   type="text"
                   placeholder="Ex: Roberto Silva"
                   value={lead.nome}
+                  disabled={isSubmitting}
                   onChange={(e) => setLead({ ...lead, nome: e.target.value })}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
                   required
                 />
               </div>
@@ -766,10 +901,11 @@ function Index() {
                   type="text"
                   placeholder="Ex: Stratto Indústria & Comércio"
                   value={lead.empresa}
+                  disabled={isSubmitting}
                   onChange={(e) =>
                     setLead({ ...lead, empresa: e.target.value })
                   }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
                   required
                 />
               </div>
@@ -782,13 +918,14 @@ function Index() {
                   type="tel"
                   placeholder="(00) 00000-0000"
                   value={lead.whatsapp}
+                  disabled={isSubmitting}
                   onChange={(e) =>
                     setLead({
                       ...lead,
                       whatsapp: formatPhone(e.target.value),
                     })
                   }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
                   required
                 />
               </div>
@@ -796,22 +933,51 @@ function Index() {
               <div className="pt-4 flex items-center gap-3">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => {
                     setCurrent(QUESTIONS.length - 1);
                     setStep("quiz");
                   }}
-                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 cursor-pointer"
+                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50 cursor-pointer"
                 >
                   Voltar
                 </button>
 
                 <button
                   type="submit"
-                  disabled={!leadValid}
-                  className="flex-1 rounded-xl bg-[#09090b] px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-sm transition hover:bg-[#0052ff] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                  disabled={!leadValid || isSubmitting}
+                  className="flex-1 rounded-xl bg-[#09090b] px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-sm transition hover:bg-[#0052ff] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <span>Ver meu Score Digital</span>
-                  <span>→</span>
+                  {isSubmitting ? (
+                    <>
+                      <svg
+                        className="h-4 w-4 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <span>Salvando diagnóstico...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Ver meu Score Digital</span>
+                      <span>→</span>
+                    </>
+                  )}
                 </button>
               </div>
 
