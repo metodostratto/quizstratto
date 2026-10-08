@@ -5,23 +5,24 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Diagnóstico Digital Stratto — Avalie Marketing, Aquisição e Comercial" },
+      { title: "Diagnóstico Digital Stratto — Descubra o nível de maturidade digital da sua empresa" },
       {
         name: "description",
         content:
-          "Descubra em 2 minutos o Score Digital da sua empresa e receba 3 ações práticas personalizadas para acelerar aquisição e vendas.",
+          "Responda 10 perguntas e descubra seu Score Digital. Identifique os principais gargalos de Marketing, Aquisição e Comercial e receba 3 ações práticas personalizadas.",
       },
       { property: "og:title", content: "Diagnóstico Digital Stratto" },
       {
         property: "og:description",
         content:
-          "Descubra os gargalos de Marketing, Aquisição e Comercial da sua empresa com o Diagnóstico Estratégico Stratto.",
+          "Descubra em minutos o que está limitando as vendas da sua empresa pelo digital.",
       },
     ],
   }),
   component: Index,
 });
 
+/* ─────────────────────── constantes ─────────────────────── */
 const POINTS = [0, 3, 7, 10] as const;
 
 interface QuestionData {
@@ -29,19 +30,10 @@ interface QuestionData {
   category: string;
   q: string;
   options: [string, string, string, string];
-  impactWeight: number; // Maior impacto comercial para desempate
-  deficiencyAction: {
-    title: string;
-    description: string;
-  };
-  intermediateAction: {
-    title: string;
-    description: string;
-  };
-  advancedAction: {
-    title: string;
-    description: string;
-  };
+  impactWeight: number;
+  deficiencyAction: { title: string; description: string };
+  intermediateAction: { title: string; description: string };
+  advancedAction: { title: string; description: string };
 }
 
 const QUESTIONS: QuestionData[] = [
@@ -317,213 +309,153 @@ const QUESTIONS: QuestionData[] = [
   },
 ];
 
+/* ─────────────────────── tipos ─────────────────────── */
 type Step = "intro" | "quiz" | "lead" | "analyzing" | "result";
 
 interface ClassificationInfo {
   label: string;
-  badgeClass: string;
   text: string;
 }
 
+/* ─────────────────────── helpers ─────────────────────── */
 function classify(score: number): ClassificationInfo {
-  if (score <= 30) {
+  if (score <= 30)
     return {
       label: "PRESENÇA DIGITAL INICIAL",
-      badgeClass: "bg-zinc-100 text-zinc-800 border-zinc-300",
       text: "Sua empresa ainda depende fortemente de indicação ou acaso para vender. Não há canais digitais ativos ou processos comerciais previsíveis para sustentar o crescimento.",
     };
-  }
-  if (score <= 55) {
+  if (score <= 55)
     return {
       label: "ESTRUTURA EM CONSTRUÇÃO",
-      badgeClass: "bg-amber-50 text-amber-900 border-amber-200",
       text: "Existem iniciativas digitais em andamento, mas faltam consistência e processos. A aquisição oscila frequentemente e oportunidades são perdidas por falta de alinhamento comercial.",
     };
-  }
-  if (score <= 75) {
+  if (score <= 75)
     return {
       label: "OPERAÇÃO EM CRESCIMENTO",
-      badgeClass: "bg-blue-50 text-[#0052FF] border-blue-200",
       text: "Sua empresa já atrai clientes pelo digital e possui tração. No entanto, ainda existem gargalos claros em processos de follow-up, métricas e previsibilidade que impedem a escala.",
     };
-  }
   return {
     label: "OPERAÇÃO ESTRUTURADA",
-    badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
     text: "Sua empresa possui maturidade digital avançada, canais ativos e processos desenhados. O próximo passo é otimizar taxas de conversão por etapa, refinar o CAC e acelerar a escala.",
   };
 }
 
 function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits ? `(${digits}` : "";
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
 }
 
+/* ─────────────────────── ícones inline ─────────────────────── */
+function SpinnerIcon({ cls = "h-5 w-5" }: { cls?: string }) {
+  return (
+    <svg className={`${cls} animate-spin`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 8l3.5 3.5L13 5" stroke="#0052FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ─────────────────────── componente principal ─────────────────────── */
 function Index() {
   const [step, setStep] = useState<Step>("intro");
-  const [current, setCurrent] = useState<number>(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    Array(QUESTIONS.length).fill(null)
-  );
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null));
   const [lead, setLead] = useState({ nome: "", empresa: "", whatsapp: "" });
-  const [displayScore, setDisplayScore] = useState<number>(0);
-  const [analyzingPhase, setAnalyzingPhase] = useState<number>(0);
+  const [displayScore, setDisplayScore] = useState(0);
+  const [analyzingPhase, setAnalyzingPhase] = useState(0);
 
-  // Estados de integração e proteção contra múltiplos envios
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
-  const submissionLock = useRef<boolean>(false);
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+  const submissionLock = useRef(false);
 
-  // Captura automática e persistente de UTMs da URL
-  const [utms, setUtms] = useState<{
-    utm_source: string | null;
-    utm_medium: string | null;
-    utm_campaign: string | null;
-    utm_content: string | null;
-    utm_term: string | null;
-  }>({
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_content: null,
-    utm_term: null,
+  const [utms, setUtms] = useState({
+    utm_source: null as string | null,
+    utm_medium: null as string | null,
+    utm_campaign: null as string | null,
+    utm_content: null as string | null,
+    utm_term: null as string | null,
   });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
+      const p = new URLSearchParams(window.location.search);
       setUtms({
-        utm_source: params.get("utm_source") || null,
-        utm_medium: params.get("utm_medium") || null,
-        utm_campaign: params.get("utm_campaign") || null,
-        utm_content: params.get("utm_content") || null,
-        utm_term: params.get("utm_term") || null,
+        utm_source: p.get("utm_source"),
+        utm_medium: p.get("utm_medium"),
+        utm_campaign: p.get("utm_campaign"),
+        utm_content: p.get("utm_content"),
+        utm_term: p.get("utm_term"),
       });
     }
   }, []);
 
-  const score = useMemo(() => {
-    return answers.reduce<number>(
-      (acc, val) => acc + (val === null ? 0 : POINTS[val] ?? 0),
-      0
-    );
-  }, [answers]);
+  const score = useMemo(
+    () => answers.reduce<number>((acc, v) => acc + (v === null ? 0 : POINTS[v] ?? 0), 0),
+    [answers]
+  );
 
   const selected = answers[current];
 
-  // Identificação das 3 maiores deficiências com desempate por impacto comercial
   const recommendedActions = useMemo(() => {
     const list = QUESTIONS.map((q, idx) => {
-      const ansIdx = answers[idx];
-      const pts = ansIdx !== null ? POINTS[ansIdx] : 0;
-      let actionObj: { title: string; description: string };
-
-      if (pts <= 3) {
-        actionObj = q.deficiencyAction;
-      } else if (pts === 7) {
-        actionObj = q.intermediateAction;
-      } else {
-        actionObj = q.advancedAction;
-      }
-
-      return {
-        questionId: q.id,
-        category: q.category,
-        points: pts,
-        impactWeight: q.impactWeight,
-        title: actionObj.title,
-        description: actionObj.description,
-      };
+      const a = answers[idx];
+      const pts = a !== null ? POINTS[a] : 0;
+      const action = pts <= 3 ? q.deficiencyAction : pts === 7 ? q.intermediateAction : q.advancedAction;
+      return { questionId: q.id, category: q.category, points: pts, impactWeight: q.impactWeight, ...action };
     });
-
-    // Ordenar primeiro pela menor pontuação (maior deficiência);
-    // Em caso de empate, priorizar pelo maior impacto comercial
-    list.sort((a, b) => {
-      if (a.points !== b.points) {
-        return a.points - b.points;
-      }
-      return b.impactWeight - a.impactWeight;
-    });
-
+    list.sort((a, b) => a.points !== b.points ? a.points - b.points : b.impactWeight - a.impactWeight);
     return list.slice(0, 3);
   }, [answers]);
 
-  // Transição de análise elegante (1.8s)
+  // Análise loading
   useEffect(() => {
-    if (step === "analyzing") {
-      setAnalyzingPhase(0);
-      const phase1 = setTimeout(() => setAnalyzingPhase(1), 600);
-      const phase2 = setTimeout(() => setAnalyzingPhase(2), 1200);
-      const done = setTimeout(() => {
-        setStep("result");
-      }, 1800);
-
-      return () => {
-        clearTimeout(phase1);
-        clearTimeout(phase2);
-        clearTimeout(done);
-      };
-    }
+    if (step !== "analyzing") return;
+    setAnalyzingPhase(0);
+    const t1 = setTimeout(() => setAnalyzingPhase(1), 600);
+    const t2 = setTimeout(() => setAnalyzingPhase(2), 1200);
+    const t3 = setTimeout(() => setStep("result"), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [step]);
 
-  // Animação acelerada com desaceleração (ease-out cubic) do Score
+  // Animação do score (ease-out cubic)
   useEffect(() => {
-    if (step !== "result") {
-      setDisplayScore(0);
-      return;
-    }
-
-    let animationFrameId: number;
-    const startTime = performance.now();
-    const duration = 1400; // 1.4s
-
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Ease out cubic: começa rápido e desacelera ao final
-      const ease = 1 - Math.pow(1 - progress, 3);
-      const val = Math.round(ease * score);
-      setDisplayScore(val);
-
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
+    if (step !== "result") { setDisplayScore(0); return; }
+    let raf: number;
+    const start = performance.now();
+    const dur = 1400;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / dur);
+      setDisplayScore(Math.round((1 - Math.pow(1 - p, 3)) * score));
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [step, score]);
 
-  const handleSelectOption = (index: number) => {
-    setAnswers((prev) => {
-      const next = [...prev];
-      next[current] = index;
-      return next;
-    });
+  const handleSelectOption = (i: number) => {
+    setAnswers(prev => prev.map((v, idx) => idx === current ? i : v));
   };
 
   const nextQuestion = () => {
-    if (current < QUESTIONS.length - 1) {
-      setCurrent((c) => c + 1);
-    } else {
-      setStep("lead");
-    }
+    if (current < QUESTIONS.length - 1) setCurrent(c => c + 1);
+    else setStep("lead");
   };
 
   const prevQuestion = () => {
-    if (current > 0) {
-      setCurrent((c) => c - 1);
-    } else {
-      setStep("intro");
-    }
+    if (current > 0) setCurrent(c => c - 1);
+    else setStep("intro");
   };
 
   const restart = () => {
@@ -542,42 +474,29 @@ function Index() {
     lead.empresa.trim().length >= 2 &&
     lead.whatsapp.replace(/\D/g, "").length >= 10;
 
-  const currentQ = QUESTIONS[current];
-  const progressRatio = (current + 1) / QUESTIONS.length;
+  const currentQ = QUESTIONS[current]!;
   const classification = classify(score);
 
-  // Submissão ao Supabase com proteção contra duplo envio e UX de erro
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leadValid || isSubmitting || submissionLock.current) return;
-
     setSubmitError(null);
-
-    // Se já foi enviado com sucesso nesta sessão para este lead, avança direto
-    if (leadSubmitted) {
-      setStep("analyzing");
-      return;
-    }
+    if (leadSubmitted) { setStep("analyzing"); return; }
 
     setIsSubmitting(true);
     submissionLock.current = true;
 
-    // Montar respostas completas em formato estruturado
     const respostasPayload = QUESTIONS.map((q, idx) => {
-      const ansIdx = answers[idx];
-      const letter = ansIdx !== null ? String.fromCharCode(65 + ansIdx) : "N/A";
-      const text = ansIdx !== null ? q.options[ansIdx] : "";
-      const pts = ansIdx !== null ? (POINTS[ansIdx] ?? 0) : 0;
+      const a = answers[idx];
       return {
         identificador: q.id,
         pergunta: q.q,
-        alternativa: letter,
-        texto_resposta: text,
-        pontuacao: pts,
+        alternativa: a !== null ? String.fromCharCode(65 + a) : "N/A",
+        texto_resposta: a !== null ? q.options[a] : "",
+        pontuacao: a !== null ? (POINTS[a] ?? 0) : 0,
       };
     });
 
-    // Montar as 3 ações recomendadas geradas
     const acoesPayload = recommendedActions.map((action, i) => ({
       ordem: i + 1,
       categoria: action.category,
@@ -603,10 +522,9 @@ function Index() {
 
       let { error } = await supabase.from("Leads").insert([payload]);
 
-      // Tratamento resiliente se alguma coluna opcional não existir no schema
       if (error && error.code === "PGRST204" && error.message) {
         const match = error.message.match(/Could not find the '([^']+)' column/);
-        if (match && match[1]) {
+        if (match?.[1]) {
           delete payload[match[1]];
           const retry = await supabase.from("Leads").insert([payload]);
           error = retry.error;
@@ -615,9 +533,7 @@ function Index() {
 
       if (error) {
         console.error("Erro ao registrar lead no Supabase:", error);
-        setSubmitError(
-          "Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente."
-        );
+        setSubmitError("Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente.");
         setIsSubmitting(false);
         submissionLock.current = false;
         return;
@@ -628,565 +544,413 @@ function Index() {
       submissionLock.current = false;
       setStep("analyzing");
     } catch (err) {
-      console.error("Erro inesperado ao registrar lead no Supabase:", err);
-      setSubmitError(
-        "Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente."
-      );
+      console.error("Erro inesperado ao registrar lead:", err);
+      setSubmitError("Não foi possível salvar seu diagnóstico neste momento. Por favor, tente novamente.");
       setIsSubmitting(false);
       submissionLock.current = false;
     }
   };
 
-  // Link inteligente para WhatsApp comercial da Stratto com contexto pronto
   const whatsappUrl = useMemo(() => {
-    const message = `Olá! Realizei o Diagnóstico Digital Stratto para a empresa *${lead.empresa.trim()}* e nosso resultado foi *${score}/100* (${classification.label}).\n\nGostaria de agendar uma análise estratégica da minha empresa.`;
-    return `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
+    const msg = `Olá! Realizei o Diagnóstico Digital Stratto para a empresa *${lead.empresa.trim()}* e nosso resultado foi *${score}/100* (${classification.label}).\n\nGostaria de agendar uma análise estratégica da minha empresa.`;
+    return `https://wa.me/5511999999999?text=${encodeURIComponent(msg)}`;
   }, [lead.empresa, score, classification.label]);
 
+  /* ─────────────────────── render ─────────────────────── */
   return (
-    <div className="min-h-screen bg-[#fafafb] text-[#09090b] flex flex-col justify-between selection:bg-[#0052ff] selection:text-white">
-      {/* Header Stratto Premium */}
-      <header className="w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFB] text-[#09090B] selection:bg-[#0052FF]/20">
+
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-30 w-full border-b border-zinc-200 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-5">
+          {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#09090b] text-white font-black text-xs tracking-tighter">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#09090B] text-[10px] font-black tracking-tighter text-white">
               ST
             </span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-extrabold tracking-wider text-[#09090b]">
-                STRATTO
-              </span>
-              <span className="hidden sm:inline text-xs font-medium text-zinc-400">
-                |
-              </span>
-              <span className="hidden sm:inline text-xs font-medium text-zinc-500">
-                Diagnóstico de Maturidade Digital
-              </span>
-            </div>
+            <span className="text-sm font-extrabold tracking-[0.12em] text-[#09090B]">STRATTO</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0052ff]" />
-              Auditoria Empresarial
+          {/* Indicador de progresso no quiz */}
+          {step === "quiz" && (
+            <span className="text-xs font-semibold text-zinc-400 tabular-nums">
+              {String(current + 1).padStart(2, "0")} / {String(QUESTIONS.length).padStart(2, "0")}
             </span>
-          </div>
+          )}
+
+          {step !== "quiz" && (
+            <span className="text-[11px] font-medium text-zinc-400">Diagnóstico Digital</span>
+          )}
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
-      <main className="mx-auto w-full max-w-2xl px-5 py-8 sm:py-12 flex-1 flex flex-col justify-center">
-        {/* STEP: INTRO */}
+      {/* ── MAIN ── */}
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10 sm:py-16">
+
+        {/* ══════════════ INTRO ══════════════ */}
         {step === "intro" && (
-          <section className="animate-rise space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/60 px-3.5 py-1.5 text-xs font-semibold text-[#0052ff]">
-              <span>10 perguntas estratégicas</span>
-              <span>•</span>
-              <span>2 minutos</span>
+          <section className="animate-rise">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#0052FF]/20 bg-[#0052FF]/8 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
+              10 perguntas&nbsp;•&nbsp;3 minutos&nbsp;•&nbsp;Gratuito
             </div>
 
-            <div className="space-y-4">
-              <h1 className="text-3xl font-extrabold tracking-tight text-[#09090b] sm:text-5xl sm:leading-[1.1]">
-                Descubra como está o digital da sua empresa
-              </h1>
-              <p className="text-base sm:text-lg text-zinc-600 leading-relaxed max-w-xl">
-                Avalie seus processos de{" "}
-                <strong className="text-zinc-900 font-semibold">
-                  Marketing, Aquisição e Comercial
-                </strong>
-                . Identifique exatamente onde você perde vendas e receba um
-                plano prático com 3 ações prioritárias.
-              </p>
-            </div>
+            {/* Headline */}
+            <h1 className="mt-6 text-[1.75rem] font-extrabold leading-[1.18] tracking-tight text-[#09090B] sm:text-5xl sm:leading-[1.1]">
+              Sua empresa está preparada para{" "}
+              <span className="text-[#0052FF]">vender mais</span> pelo digital?
+            </h1>
 
-            {/* Pilares Stratto */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Pilar 01
-                </span>
-                <span className="text-sm font-semibold text-zinc-900 block">
-                  Aquisição Previsível
-                </span>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Redução de dependência de indicações.
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Pilar 02
-                </span>
-                <span className="text-sm font-semibold text-zinc-900 block">
-                  Processo Comercial
-                </span>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Velocidade de atendimento e follow-up.
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Pilar 03
-                </span>
-                <span className="text-sm font-semibold text-zinc-900 block">
-                  Métricas & Vendas
-                </span>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Clareza de conversão e retorno financeiro.
-                </p>
-              </div>
-            </div>
+            {/* Subheadline */}
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg">
+              Descubra o nível de maturidade digital do seu negócio, identifique o que pode estar limitando suas vendas e receba 3 ações práticas para melhorar seus resultados.
+            </p>
 
-            <div className="pt-2">
+            {/* Benefícios */}
+            <ul className="mt-7 space-y-3">
+              {[
+                "Score digital de 0 a 100 baseado nas respostas do seu negócio",
+                "Identificação dos principais gargalos de Marketing, Aquisição e Comercial",
+                "Plano com 3 ações práticas e personalizadas para aumentar vendas",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#0052FF]/25 bg-[#0052FF]/8">
+                    <CheckIcon />
+                  </span>
+                  <span className="text-sm font-medium leading-snug text-zinc-700">{b}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <button
                 onClick={() => setStep("quiz")}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#09090b] px-8 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#0052ff] active:scale-[0.99] cursor-pointer"
+                className="w-full rounded-xl bg-[#0052FF] px-8 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition-all duration-200 hover:bg-[#0047E0] hover:shadow-lg hover:shadow-[#0052FF]/25 active:scale-[0.98] sm:w-auto"
               >
-                <span>Começar diagnóstico</span>
-                <span className="text-lg">→</span>
+                COMEÇAR MEU DIAGNÓSTICO →
               </button>
-              <p className="text-xs text-zinc-400 mt-3">
-                Diagnóstico 100% gratuito e confidencial para empresários e líderes.
-              </p>
+              <p className="text-xs text-zinc-400">Sem compromisso. Resultado ao finalizar.</p>
+            </div>
+
+            {/* Divisor */}
+            <div className="mt-16 border-t border-zinc-200 pt-6">
+              <p className="text-[11px] font-medium text-zinc-400">Uma ferramenta desenvolvida pela Stratto — Marketing & Vendas</p>
             </div>
           </section>
         )}
 
-        {/* STEP: QUIZ (1 pergunta por vez, ocupando boa parte da tela) */}
+        {/* ══════════════ QUIZ ══════════════ */}
         {step === "quiz" && (
-          <section className="animate-rise min-h-[500px] flex flex-col justify-between">
-            <div>
-              {/* Progresso minimalista: 01 / 10 + linha fina */}
-              <div className="mb-8">
-                <div className="mb-2.5 flex items-center justify-between text-xs font-semibold tracking-wider text-zinc-500">
-                  <span className="uppercase text-[11px] font-bold text-[#0052ff] bg-blue-50 px-2.5 py-0.5 rounded-md">
-                    {currentQ.category}
-                  </span>
-                  <span className="font-mono text-zinc-600 font-bold">
-                    {String(current + 1).padStart(2, "0")} /{" "}
-                    {String(QUESTIONS.length).padStart(2, "0")}
-                  </span>
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-200">
-                  <div
-                    className="h-full rounded-full bg-[#0052ff] transition-all duration-300 ease-out"
-                    style={{ width: `${progressRatio * 100}%` }}
-                  />
-                </div>
+          <section className="animate-rise flex min-h-[540px] flex-col">
+            {/* Progresso */}
+            <div className="mb-8">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="rounded-md bg-[#0052FF]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0052FF]">
+                  {currentQ.category}
+                </span>
+                <span className="text-[11px] font-semibold text-zinc-400 tabular-nums">
+                  {String(current + 1).padStart(2, "0")} / {String(QUESTIONS.length).padStart(2, "0")}
+                </span>
               </div>
-
-              {/* Pergunta */}
-              <div key={current} className="animate-rise">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#09090b] leading-snug">
-                  {currentQ.q}
-                </h2>
-
-                {/* Opções */}
-                <div className="mt-8 grid gap-3">
-                  {currentQ.options.map((opt, i) => {
-                    const isSelected = selected === i;
-                    const letter = String.fromCharCode(65 + i);
-
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => handleSelectOption(i)}
-                        className={`group flex items-start gap-4 rounded-xl border p-4 sm:p-4.5 text-left transition-all cursor-pointer ${
-                          isSelected
-                            ? "border-[#0052ff] bg-blue-50/25 ring-2 ring-[#0052ff]/15 shadow-sm"
-                            : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/60"
-                        }`}
-                      >
-                        <span
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all ${
-                            isSelected
-                              ? "bg-[#0052ff] text-white"
-                              : "border border-zinc-200 bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200/60"
-                          }`}
-                        >
-                          {letter}
-                        </span>
-                        <span
-                          className={`text-sm sm:text-base font-medium leading-normal pt-0.5 ${
-                            isSelected ? "text-zinc-950 font-semibold" : "text-zinc-700"
-                          }`}
-                        >
-                          {opt}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-200">
+                <div
+                  className="h-full rounded-full bg-[#0052FF] transition-all duration-200 ease-out"
+                  style={{ width: `${((current + 1) / QUESTIONS.length) * 100}%` }}
+                />
               </div>
             </div>
 
-            {/* Navegação: Voltar / Continuar */}
-            <div className="mt-10 flex items-center gap-3 pt-4 border-t border-zinc-100">
+            {/* Pergunta */}
+            <div key={current} className="animate-rise flex-1">
+              <h2 className="text-xl font-bold leading-snug tracking-tight text-[#09090B] sm:text-2xl">
+                {currentQ.q}
+              </h2>
+
+              {/* Opções */}
+              <div className="mt-6 grid gap-3">
+                {currentQ.options.map((opt, i) => {
+                  const active = selected === i;
+                  const letter = String.fromCharCode(65 + i);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSelectOption(i)}
+                      className={[
+                        "group flex w-full items-start gap-4 rounded-xl border px-4 py-3.5 text-left transition-all duration-150",
+                        active
+                          ? "border-[#0052FF] bg-[#0052FF]/5 ring-2 ring-[#0052FF]/20"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50",
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors duration-150",
+                          active
+                            ? "bg-[#0052FF] text-white"
+                            : "border border-zinc-200 bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200",
+                        ].join(" ")}
+                      >
+                        {letter}
+                      </span>
+                      <span
+                        className={[
+                          "pt-0.5 text-sm leading-snug transition-colors duration-150 sm:text-base",
+                          active ? "font-semibold text-[#09090B]" : "font-medium text-zinc-700",
+                        ].join(" ")}
+                      >
+                        {opt}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Navegação */}
+            <div className="mt-10 flex items-center gap-3 border-t border-zinc-100 pt-5">
               <button
                 type="button"
                 onClick={prevQuestion}
-                className="rounded-xl border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 hover:border-zinc-300 cursor-pointer"
+                className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition duration-150 hover:bg-zinc-50 active:scale-[0.98]"
               >
-                Voltar
+                ← Voltar
               </button>
-
               <button
                 type="button"
                 onClick={nextQuestion}
                 disabled={selected === null}
-                className="flex-1 rounded-xl bg-[#09090b] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0052ff] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#09090B] px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-150 hover:bg-[#0052FF] disabled:cursor-not-allowed disabled:opacity-30 active:scale-[0.98]"
               >
-                <span>
-                  {current === QUESTIONS.length - 1
-                    ? "Concluir perguntas"
-                    : "Continuar"}
-                </span>
+                <span>{current === QUESTIONS.length - 1 ? "Ver meu resultado" : "Continuar"}</span>
                 <span>→</span>
               </button>
             </div>
           </section>
         )}
 
-        {/* STEP: LEAD (Captura antes do resultado com integração Supabase) */}
+        {/* ══════════════ LEAD ══════════════ */}
         {step === "lead" && (
-          <section className="animate-rise space-y-6">
+          <section className="animate-rise">
+            {/* Cabeçalho */}
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 Diagnóstico concluído
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#09090b]">
-                Onde devemos enviar seu diagnóstico?
+              </span>
+              <h2 className="text-2xl font-extrabold tracking-tight text-[#09090B] sm:text-3xl">
+                Onde enviamos seu resultado?
               </h2>
-              <p className="text-sm sm:text-base text-zinc-600">
-                Preencha os dados abaixo para gerar imediatamente o Score Digital
-                da sua empresa e desbloquear as ações práticas.
+              <p className="text-sm leading-relaxed text-zinc-500 sm:text-base">
+                Preencha os campos abaixo para gerar seu <strong className="text-zinc-700 font-semibold">Score Digital</strong> e desbloquear as 3 ações personalizadas.
               </p>
             </div>
 
-            {/* Mensagem de Erro Amigável (sem detalhes técnicos) */}
+            {/* Erro amigável */}
             {submitError && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 flex items-start gap-3">
-                <span className="text-red-500 font-bold shrink-0 mt-0.5">⚠️</span>
-                <div className="space-y-1">
+              <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <span className="mt-0.5 shrink-0 text-base">⚠️</span>
+                <div>
                   <p className="font-semibold">{submitError}</p>
-                  <p className="text-xs text-red-700">
-                    Suas respostas estão preservadas. Basta clicar no botão abaixo para tentar novamente.
-                  </p>
+                  <p className="mt-0.5 text-xs text-red-600">Suas respostas estão preservadas. Tente novamente.</p>
                 </div>
               </div>
             )}
 
-            <form onSubmit={handleLeadSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-1.5">
-                  Seu nome completo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Roberto Silva"
-                  value={lead.nome}
-                  disabled={isSubmitting}
-                  onChange={(e) => setLead({ ...lead, nome: e.target.value })}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
-                  required
-                />
-              </div>
+            {/* Formulário */}
+            <form onSubmit={handleLeadSubmit} className="mt-7 space-y-4">
+              {(
+                [
+                  { key: "nome", label: "Seu nome completo", ph: "Ex: Roberto Silva", type: "text" },
+                  { key: "empresa", label: "Nome da sua empresa", ph: "Ex: Acme Ltda.", type: "text" },
+                  { key: "whatsapp", label: "WhatsApp com DDD", ph: "(00) 00000-0000", type: "tel" },
+                ] as const
+              ).map(({ key, label, ph, type }) => (
+                <div key={key}>
+                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-zinc-600">
+                    {label}
+                  </label>
+                  <input
+                    type={type}
+                    placeholder={ph}
+                    value={lead[key]}
+                    disabled={isSubmitting}
+                    onChange={(e) =>
+                      setLead((prev) => ({
+                        ...prev,
+                        [key]: key === "whatsapp" ? formatPhone(e.target.value) : e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-[#09090B] outline-none transition duration-150 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 disabled:bg-zinc-50 disabled:text-zinc-400 sm:text-base"
+                    required
+                  />
+                </div>
+              ))}
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-1.5">
-                  Nome da sua empresa
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Stratto Indústria & Comércio"
-                  value={lead.empresa}
-                  disabled={isSubmitting}
-                  onChange={(e) =>
-                    setLead({ ...lead, empresa: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-1.5">
-                  WhatsApp com DDD
-                </label>
-                <input
-                  type="tel"
-                  placeholder="(00) 00000-0000"
-                  value={lead.whatsapp}
-                  disabled={isSubmitting}
-                  onChange={(e) =>
-                    setLead({
-                      ...lead,
-                      whatsapp: formatPhone(e.target.value),
-                    })
-                  }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-sm sm:text-base text-zinc-900 outline-none transition focus:border-[#0052ff] focus:ring-2 focus:ring-[#0052ff]/15 disabled:bg-zinc-50 disabled:text-zinc-500"
-                  required
-                />
-              </div>
-
-              <div className="pt-4 flex items-center gap-3">
+              <div className="flex gap-3 pt-3">
                 <button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={() => {
-                    setCurrent(QUESTIONS.length - 1);
-                    setStep("quiz");
-                  }}
-                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50 cursor-pointer"
+                  onClick={() => { setCurrent(QUESTIONS.length - 1); setStep("quiz"); }}
+                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
                 >
-                  Voltar
+                  ← Voltar
                 </button>
-
                 <button
                   type="submit"
                   disabled={!leadValid || isSubmitting}
-                  className="flex-1 rounded-xl bg-[#09090b] px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-sm transition hover:bg-[#0052ff] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98] sm:text-base"
                 >
                   {isSubmitting ? (
-                    <>
-                      <svg
-                        className="h-4 w-4 animate-spin text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Salvando diagnóstico...</span>
-                    </>
+                    <><SpinnerIcon /> Salvando…</>
                   ) : (
-                    <>
-                      <span>Ver meu Score Digital</span>
-                      <span>→</span>
-                    </>
+                    <>Ver meu Score Digital →</>
                   )}
                 </button>
               </div>
 
-              <p className="text-center text-xs text-zinc-400 pt-2">
-                🔒 Seus dados estão seguros e não serão compartilhados com terceiros.
+              <p className="pt-1 text-center text-[11px] text-zinc-400">
+                🔒 Seus dados estão seguros e não serão compartilhados.
               </p>
             </form>
           </section>
         )}
 
-        {/* STEP: ANALYZING (1 a 2 segundos de loading elegante) */}
+        {/* ══════════════ ANALYZING ══════════════ */}
         {step === "analyzing" && (
-          <section className="animate-rise text-center py-16 px-4 space-y-6">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 text-[#0052ff] shadow-sm animate-pulse-subtle">
-              <svg
-                className="h-8 w-8 animate-spin"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
+          <section className="animate-rise flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#0052FF]/20 bg-[#0052FF]/8 text-[#0052FF] animate-pulse-subtle">
+              <SpinnerIcon cls="h-7 w-7" />
             </div>
-
-            <div className="space-y-2">
-              <h3 className="text-2xl font-extrabold tracking-tight text-[#09090b]">
-                Analisando seu diagnóstico...
-              </h3>
-              <p className="text-sm font-medium text-zinc-500 h-6 transition-all duration-300">
-                {analyzingPhase === 0 &&
-                  "Cruzando dados de marketing, aquisição e comercial..."}
-                {analyzingPhase === 1 &&
-                  "Mapeando gargalos restritivos de faturamento..."}
-                {analyzingPhase === 2 &&
-                  "Priorizando as 3 ações práticas de maior impacto..."}
-              </p>
-            </div>
-
-            <div className="mx-auto max-w-xs h-1.5 w-full overflow-hidden rounded-full bg-zinc-200">
+            <h3 className="text-xl font-extrabold tracking-tight text-[#09090B] sm:text-2xl">
+              Analisando seu diagnóstico…
+            </h3>
+            <p className="mt-2 h-5 text-sm font-medium text-zinc-400 transition-all duration-300">
+              {analyzingPhase === 0 && "Cruzando dados de marketing, aquisição e comercial…"}
+              {analyzingPhase === 1 && "Mapeando gargalos restritivos de faturamento…"}
+              {analyzingPhase === 2 && "Priorizando as 3 ações de maior impacto…"}
+            </p>
+            <div className="mt-8 h-1.5 w-48 overflow-hidden rounded-full bg-zinc-200">
               <div
-                className="h-full rounded-full bg-[#0052ff] transition-all duration-500"
-                style={{
-                  width:
-                    analyzingPhase === 0
-                      ? "35%"
-                      : analyzingPhase === 1
-                        ? "70%"
-                        : "95%",
-                }}
+                className="h-full rounded-full bg-[#0052FF] transition-all duration-500"
+                style={{ width: analyzingPhase === 0 ? "33%" : analyzingPhase === 1 ? "66%" : "95%" }}
               />
             </div>
           </section>
         )}
 
-        {/* STEP: RESULT */}
+        {/* ══════════════ RESULT ══════════════ */}
         {step === "result" && (
           <section className="animate-rise space-y-10">
-            {/* Saudação personalizada */}
-            <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                Relatório de Auditoria
-              </span>
-              <p className="text-base sm:text-lg font-semibold text-zinc-800">
+            {/* Saudação */}
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Relatório de Auditoria</span>
+              <p className="mt-1 text-base font-semibold text-zinc-700 sm:text-lg">
                 {lead.nome.trim().split(" ")[0]}, este é o diagnóstico da{" "}
-                <span className="text-zinc-950 font-bold">{lead.empresa}</span>
+                <span className="font-bold text-[#09090B]">{lead.empresa}</span>
               </p>
             </div>
 
-            {/* Card Principal de Score */}
-            <div className="rounded-2xl border border-zinc-800 bg-[#09090b] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-              <div className="relative z-10 space-y-6">
-                <div>
-                  <span className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
-                    SCORE DIGITAL DA SUA EMPRESA
+            {/* Card Score */}
+            <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-[#09090B] p-6 text-white shadow-xl sm:p-8">
+              <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#0052FF]/10 blur-3xl pointer-events-none" />
+              <div className="relative space-y-5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  SCORE DIGITAL DA SUA EMPRESA
+                </p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-mono text-7xl font-black leading-none tracking-tight text-white sm:text-8xl">
+                    {displayScore}
                   </span>
-                  <div className="mt-3 flex items-baseline gap-2">
-                    <span className="text-6xl sm:text-7xl font-black tracking-tight font-mono text-white leading-none">
-                      {displayScore}
-                    </span>
-                    <span className="text-xl sm:text-2xl font-bold text-zinc-500">
-                      /100
-                    </span>
-                  </div>
+                  <span className="pb-1 text-2xl font-bold text-zinc-500">/100</span>
                 </div>
 
-                {/* Barra de progresso animada acompanhando a contagem */}
+                {/* Barra acompanha contagem */}
                 <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
                   <div
-                    className="h-full rounded-full bg-[#0052ff] transition-all duration-150 ease-out"
+                    className="h-full rounded-full bg-[#0052FF] transition-all duration-150 ease-out"
                     style={{ width: `${displayScore}%` }}
                   />
                 </div>
 
-                {/* Classificação e breve explicação */}
-                <div className="space-y-2.5 pt-2">
-                  <span className="inline-block rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-bold text-blue-400 tracking-wide">
+                <div>
+                  <span className="inline-block rounded-full border border-[#0052FF]/30 bg-[#0052FF]/15 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-400">
                     {classification.label}
                   </span>
-                  <p className="text-sm text-zinc-300 leading-relaxed max-w-xl">
-                    {classification.text}
-                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-zinc-300">{classification.text}</p>
                 </div>
               </div>
-
-              {/* Detalhe estético discreto de fundo */}
-              <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#0052ff]/10 blur-3xl pointer-events-none" />
             </div>
 
-            {/* SEÇÃO 8: AÇÕES PRÁTICAS PERSONALIZADAS (3 maiores deficiências) */}
+            {/* Ações */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#09090b]">
+                <h3 className="text-xl font-bold tracking-tight text-[#09090B] sm:text-2xl">
                   3 ações práticas prioritárias
                 </h3>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Mapeadas especificamente a partir dos pontos críticos que mais
-                  travam as vendas da sua empresa:
+                <p className="mt-1 text-sm text-zinc-500">
+                  Baseadas nos pontos críticos identificados no seu diagnóstico:
                 </p>
               </div>
-
-              <div className="grid gap-3.5">
+              <div className="grid gap-3">
                 {recommendedActions.map((action, i) => (
                   <div
                     key={action.questionId}
-                    className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm transition hover:border-zinc-300"
+                    className="flex items-start gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-zinc-300"
                   >
-                    <div className="flex items-start gap-3.5">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-xs font-extrabold text-[#0052ff] border border-blue-100">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                            {action.category}
-                          </span>
-                        </div>
-                        <h4 className="text-base font-bold text-zinc-950">
-                          {action.title}
-                        </h4>
-                        <p className="text-sm text-zinc-600 leading-relaxed">
-                          {action.description}
-                        </p>
-                      </div>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-[11px] font-extrabold text-[#0052FF]">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{action.category}</span>
+                      <h4 className="text-base font-bold text-[#09090B]">{action.title}</h4>
+                      <p className="text-sm leading-relaxed text-zinc-600">{action.description}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* SEÇÃO 9: CTA FINAL STRATTO */}
-            <div className="rounded-2xl border border-zinc-200 bg-gradient-to-b from-white to-zinc-50/80 p-6 sm:p-8 shadow-sm space-y-6">
+            {/* CTA Stratto */}
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
               <div className="space-y-3">
-                <p className="text-base sm:text-lg font-bold text-[#09090b] leading-snug">
-                  Seu Score mostra onde sua empresa está.
-                  <br className="hidden sm:inline" />
+                <p className="text-base font-bold leading-snug text-[#09090B] sm:text-lg">
+                  Seu Score mostra onde sua empresa está.<br className="hidden sm:inline" />
                   {" "}Agora podemos mostrar como chegar ao próximo nível.
                 </p>
-
-                <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
+                <p className="text-sm leading-relaxed text-zinc-600 sm:text-base">
                   A Stratto estrutura{" "}
-                  <strong className="text-zinc-900 font-semibold">
-                    Marketing, Aquisição e Comercial
-                  </strong>{" "}
+                  <strong className="font-semibold text-zinc-900">Marketing, Aquisição e Comercial</strong>{" "}
                   para transformar investimento em vendas.
                 </p>
               </div>
 
-              {/* Destaque Stratto */}
-              <div className="rounded-xl border-l-4 border-[#0052ff] bg-blue-50/50 p-4">
-                <p className="text-base sm:text-lg font-bold italic tracking-tight text-zinc-950">
-                  “Marketing sem vendas é vaidade.”
+              <div className="my-5 rounded-xl border-l-4 border-[#0052FF] bg-blue-50/60 p-4">
+                <p className="text-base font-bold italic text-[#09090B] sm:text-lg">
+                  "Marketing sem vendas é vaidade."
                 </p>
               </div>
 
-              {/* Botão CTA Principal */}
-              <div>
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0052ff] px-6 py-4 text-base font-bold text-white shadow-sm transition hover:bg-[#0047e0] active:scale-[0.99]"
-                >
-                  <span>QUERO UMA ANÁLISE DA MINHA EMPRESA</span>
-                  <span className="text-lg">→</span>
-                </a>
-                <p className="text-center text-xs text-zinc-400 mt-2.5">
-                  Converse diretamente com um estrategista da Stratto pelo WhatsApp.
-                </p>
-              </div>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-6 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] hover:shadow-lg active:scale-[0.99] sm:text-base"
+              >
+                QUERO UMA ANÁLISE DA MINHA EMPRESA →
+              </a>
+              <p className="mt-3 text-center text-[11px] text-zinc-400">
+                Converse diretamente com um estrategista da Stratto pelo WhatsApp.
+              </p>
             </div>
 
-            {/* Botão de Refazer Diagnóstico */}
-            <div className="text-center pt-2 pb-6">
+            {/* Refazer */}
+            <div className="pb-6 text-center">
               <button
                 type="button"
                 onClick={restart}
-                className="text-xs font-semibold text-zinc-400 hover:text-zinc-800 transition underline underline-offset-4 cursor-pointer"
+                className="text-xs font-semibold text-zinc-400 underline underline-offset-4 transition hover:text-zinc-700"
               >
                 Refazer diagnóstico
               </button>
@@ -1195,13 +959,10 @@ function Index() {
         )}
       </main>
 
-      {/* Footer Minimalista */}
-      <footer className="w-full border-t border-zinc-200/80 py-6 text-center text-xs text-zinc-400 bg-white/50">
-        <div className="mx-auto max-w-4xl px-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Stratto • Marketing, Aquisição e Comercial orientados a vendas</span>
-          <span className="text-[11px] text-zinc-400">
-            Diagnóstico Empresarial Stratto © Todos os direitos reservados.
-          </span>
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-zinc-200 bg-white/60 py-5">
+        <div className="mx-auto max-w-3xl px-5 text-center text-[11px] font-medium text-zinc-400">
+          Uma ferramenta desenvolvida pela Stratto — Marketing & Vendas
         </div>
       </footer>
     </div>
