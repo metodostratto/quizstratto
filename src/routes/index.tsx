@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { trackPixelEvent, trackPixelCustom } from "@/lib/meta-pixel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -244,6 +245,7 @@ function Index() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const submissionLock = useRef(false);
+  const leadPixelSent = useRef(false);
 
   const [utms, setUtms] = useState({
     utm_source: null as string | null,
@@ -321,8 +323,12 @@ function Index() {
   };
 
   const nextQuestion = () => {
-    if (current < QUESTIONS.length - 1) setCurrent((c) => c + 1);
-    else setStep("lead");
+    if (current < QUESTIONS.length - 1) {
+      setCurrent((c) => c + 1);
+    } else {
+      trackPixelCustom("QuizComplete");
+      setStep("lead");
+    }
   };
 
   const prevQuestion = () => {
@@ -338,6 +344,7 @@ function Index() {
     setSubmitError(null);
     setLeadSubmitted(false);
     submissionLock.current = false;
+    leadPixelSent.current = false;
     setStep("intro");
   };
 
@@ -415,6 +422,14 @@ function Index() {
       }
 
       setLeadSubmitted(true);
+      if (!leadPixelSent.current) {
+        leadPixelSent.current = true;
+        trackPixelEvent("Lead", {
+          content_name: "Diagnóstico Digital Stratto",
+          score: score,
+          classificacao: classification.label,
+        });
+      }
       setIsSubmitting(false);
       submissionLock.current = false;
       setStep("analyzing");
@@ -497,7 +512,10 @@ function Index() {
             {/* CTA */}
             <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <button
-                onClick={() => setStep("quiz")}
+                onClick={() => {
+                  trackPixelCustom("QuizStart");
+                  setStep("quiz");
+                }}
                 className="w-full rounded-xl bg-[#0052FF] px-8 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition-all duration-200 hover:bg-[#0047E0] hover:shadow-lg hover:shadow-[#0052FF]/25 active:scale-[0.98] sm:w-auto cursor-pointer"
               >
                 DESCOBRIR MEU SCORE →
@@ -831,6 +849,12 @@ function Index() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  trackPixelEvent("Contact", {
+                    content_name: "Plano de Ação WhatsApp",
+                    destination: "WhatsApp Stratto",
+                  });
+                }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-6 py-4 text-sm sm:text-base font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] hover:shadow-lg active:scale-[0.99]"
               >
                 RECEBER MEU PLANO DE AÇÃO →
