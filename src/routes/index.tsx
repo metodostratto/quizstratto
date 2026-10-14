@@ -5,17 +5,17 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Diagnóstico Digital Stratto — Descubra o nível de maturidade digital da sua empresa" },
+      { title: "Diagnóstico Digital Stratto — Descubra o que está travando as vendas da sua empresa no digital" },
       {
         name: "description",
         content:
-          "Responda 10 perguntas e descubra seu Score Digital. Identifique os principais gargalos de Marketing, Aquisição e Comercial e receba 3 ações práticas personalizadas.",
+          "Responda 5 perguntas e receba seu Score Digital e 3 ações práticas em menos de 1 minuto.",
       },
       { property: "og:title", content: "Diagnóstico Digital Stratto" },
       {
         property: "og:description",
         content:
-          "Descubra em minutos o que está limitando as vendas da sua empresa pelo digital.",
+          "Descubra o que está travando as vendas da sua empresa no digital.",
       },
     ],
   }),
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
 });
 
 /* ─────────────────────── constantes ─────────────────────── */
-const POINTS = [0, 3, 7, 10] as const;
+const POINTS = [0, 6, 14, 20] as const;
 
 interface QuestionData {
   id: number;
@@ -39,181 +39,100 @@ interface QuestionData {
 const QUESTIONS: QuestionData[] = [
   {
     id: 1,
-    category: "Aquisição & Clientes",
-    q: "Hoje, de onde vêm a maioria dos novos clientes da sua empresa?",
+    category: "Aquisição de Clientes",
+    q: "De onde vêm a maioria dos seus novos clientes?",
     options: [
-      "Indicação e relacionamento",
-      "Prospecção ou movimento natural",
-      "Digital + indicação",
-      "Temos canais previsíveis de aquisição",
+      "Indicações",
+      "Movimento natural ou prospecção",
+      "Redes sociais e anúncios",
+      "Diversos canais com resultados previsíveis",
     ],
     impactWeight: 8,
     deficiencyAction: {
       title: "Crie canais ativos de aquisição",
       description:
-        "Sua empresa está excessivamente vulnerável ao depender de relacionamentos passivos. Desenvolva canais digitais próprios para atrair clientes de forma intencional e constante.",
+        "Sua empresa está muito dependente de indicações ou movimento passivo. Desenvolva canais digitais próprios para atrair clientes de forma intencional e constante.",
     },
     intermediateAction: {
-      title: "Escale os canais digitais",
+      title: "Escale e diversifique seus canais digitais",
       description:
-        "Aumente a fatia de clientes vindos do digital para que a aquisição previsível supere a dependência do boca a boca.",
+        "Aumente a fatia de clientes vindos de canais digitais estruturados para que a aquisição previsível supere a dependência do boca a boca.",
     },
     advancedAction: {
       title: "Otimize o custo de aquisição (CAC)",
       description:
-        "Explore novos públicos e canais complementares mantendo o controle rigoroso do CAC para sustentar a escala.",
+        "Explore novos públicos e canais complementares mantendo o controle rigoroso do CAC para sustentar a escala previsível.",
     },
   },
   {
     id: 2,
-    category: "Previsibilidade de Demanda",
-    q: "Se as indicações parassem hoje, sua empresa conseguiria manter o volume de novos clientes?",
+    category: "Anúncios Digitais",
+    q: "Sua empresa investe em anúncios digitais?",
     options: [
-      "Provavelmente não",
-      "Teríamos bastante dificuldade",
-      "Sim, mas sentiríamos impacto",
-      "Sim, temos outros canais consistentes",
+      "Nunca investimos",
+      "Já investimos, mas paramos",
+      "Investimos sem resultados consistentes",
+      "Sim, e acompanhamos os resultados",
     ],
     impactWeight: 9,
     deficiencyAction: {
-      title: "Crie um segundo canal de aquisição",
+      title: "Valide um canal de aquisição pago",
       description:
-        "Sua empresa está muito dependente de indicação. Escolha um canal como Meta Ads ou Google e valide uma nova fonte de oportunidades.",
+        "Comece com campanhas estruturadas em Meta Ads ou Google Ads e acompanhe as oportunidades geradas, não apenas cliques ou curtidas.",
     },
     intermediateAction: {
-      title: "Blinde sua empresa contra oscilações",
+      title: "Traga previsibilidade aos anúncios digitais",
       description:
-        "Fortaleça suas campanhas ativas para garantir estabilidade no faturamento mesmo durante meses de baixa indicação.",
+        "Alinhe suas campanhas diretamente ao funil comercial, mensurando o custo por oportunidade qualificada para atingir consistência.",
     },
     advancedAction: {
-      title: "Diversifique canais de alta escala",
+      title: "Escale criativos e teste novas ofertas",
       description:
-        "Construa redundância nos seus canais de aquisição para que nenhuma alteração de plataforma ameace seu ritmo de vendas.",
+        "Aumente o investimento nos anúncios validados testando novos formatos e abordagens para acelerar o volume de vendas mantendo ROI positivo.",
     },
   },
   {
     id: 3,
-    category: "Mídia & Tráfego Pago",
-    q: "Sua empresa investe atualmente em tráfego pago?",
+    category: "Atendimento Comercial",
+    q: "Como funciona o atendimento dos novos clientes?",
     options: [
-      "Nunca investimos",
-      "Já investimos, mas paramos",
-      "Investimos, porém sem previsibilidade",
-      "Sim, e sabemos o que ele gera em oportunidades/vendas",
-    ],
-    impactWeight: 7,
-    deficiencyAction: {
-      title: "Valide um canal de aquisição pago",
-      description:
-        "Comece com uma campanha simples em Meta Ads ou Google Ads e acompanhe oportunidades geradas, não apenas cliques.",
-    },
-    intermediateAction: {
-      title: "Traga previsibilidade ao tráfego pago",
-      description:
-        "Alinhe suas campanhas diretamente com o time comercial, mensurando o custo por oportunidade qualificada e não apenas leads soltos.",
-    },
-    advancedAction: {
-      title: "Escale criativos e teste novas teses",
-      description:
-        "Aumente o investimento em tráfego validado testando novos ângulos de oferta para acelerar o volume de vendas mantendo ROI positivo.",
-    },
-  },
-  {
-    id: 4,
-    category: "Posicionamento & Autoridade",
-    q: "Seu Instagram transmite a qualidade que sua empresa entrega?",
-    options: [
-      "Não",
-      "Estamos tentando melhorar",
-      "Acredito que sim",
-      "Sim, e ele ajuda comercialmente a empresa",
-    ],
-    impactWeight: 4,
-    deficiencyAction: {
-      title: "Melhore sua vitrine digital",
-      description:
-        "Deixe claro no perfil o que sua empresa vende, para quem vende e quais resultados já entregou.",
-    },
-    intermediateAction: {
-      title: "Transforme o Instagram em canal comercial",
-      description:
-        "Utilize narrativas focadas nas dores dos seus clientes ideais e insira chamadas para ação diretas para o atendimento comercial.",
-    },
-    advancedAction: {
-      title: "Produza autoridade para fechamento",
-      description:
-        "Publique estudos de caso e provas sociais de alto impacto para reduzir o ciclo de negociação e aumentar seu ticket médio.",
-    },
-  },
-  {
-    id: 5,
-    category: "Presença em Buscas",
-    q: "Quando alguém procura no Google pelo que você vende, encontra sua empresa?",
-    options: [
-      "Não sei",
-      "Dificilmente",
-      "Sim, mas poderia aparecer melhor",
-      "Sim, e recebemos oportunidades pelo Google",
-    ],
-    impactWeight: 6,
-    deficiencyAction: {
-      title: "Fortaleça sua presença no Google",
-      description:
-        "Atualize seu Perfil da Empresa, aumente avaliações e mantenha informações, fotos e serviços atualizados.",
-    },
-    intermediateAction: {
-      title: "Capture demanda de fundo de funil",
-      description:
-        "Otimize palavras-chave com forte intenção de compra e considere anúncios no Google para interceptar clientes no momento exato da decisão.",
-    },
-    advancedAction: {
-      title: "Domine termos estratégicos de busca",
-      description:
-        "Amplie seu alcance nas buscas patrocinadas e locais para cobrir novas regiões e palavras-chave comerciais dos seus melhores produtos/serviços.",
-    },
-  },
-  {
-    id: 6,
-    category: "Processo Comercial & WhatsApp",
-    q: "Quando chega um novo contato pelo WhatsApp, existe um processo definido de atendimento?",
-    options: [
-      "Não",
-      "Cada pessoa atende do seu jeito",
+      "Sem processo definido",
+      "Cada vendedor atende do seu jeito",
       "Temos um padrão básico",
-      "Temos processo, abordagem e acompanhamento definidos",
+      "Temos processo comercial estruturado",
     ],
     impactWeight: 10,
     deficiencyAction: {
       title: "Padronize seu primeiro atendimento",
       description:
-        "Defina como todo novo contato deve ser atendido, quais perguntas fazer e qual próximo passo oferecer.",
+        "Defina como todo novo contato deve ser atendido, quais perguntas fazer e qual próximo passo oferecer para não perder oportunidades prontas para comprar.",
     },
     intermediateAction: {
-      title: "Aperfeiçoe a qualificação no WhatsApp",
+      title: "Aperfeiçoe o processo de qualificação",
       description:
         "Crie um roteiro objetivo para entender o momento e a capacidade do cliente, reduzindo o tempo de resposta e acelerando o envio de propostas.",
     },
     advancedAction: {
       title: "Centralize e monitore SLAs comerciais",
       description:
-        "Integre ferramentas para monitorar tempo de primeira resposta e evolução de cada lead, evitando que qualquer oportunidade se perca.",
+        "Integre ferramentas de CRM para monitorar tempo de primeira resposta e evolução de cada lead, evitando que qualquer oportunidade se perca.",
     },
   },
   {
-    id: 7,
+    id: 4,
     category: "Follow-up & Fechamento",
-    q: "O que normalmente acontece com quem pede orçamento e não compra na hora?",
+    q: "O que acontece com quem pede orçamento e não compra?",
     options: [
       "Geralmente perdemos o contato",
-      "O vendedor chama novamente quando lembra",
-      "Fazemos alguns follow-ups",
-      "Existe uma rotina estruturada de follow-up",
+      "Retornamos quando lembramos",
+      "Fazemos alguns contatos",
+      "Temos uma rotina de follow-up",
     ],
     impactWeight: 10,
     deficiencyAction: {
-      title: "Crie uma rotina de follow-up",
+      title: "Crie uma rotina estruturada de follow-up",
       description:
-        "Defina dias específicos para retomar contato com quem pediu orçamento e ainda não comprou.",
+        "Defina dias específicos para retomar contato com quem pediu orçamento e ainda não comprou. Grande parte das vendas é fechada no acompanhamento.",
     },
     intermediateAction: {
       title: "Formalize cadência de contato multicanal",
@@ -223,88 +142,34 @@ const QUESTIONS: QuestionData[] = [
     advancedAction: {
       title: "Crie campanhas de reativação de orçamentos",
       description:
-        "Reative clientes que receberam propostas nos últimos 6 meses com condições ou abordagens diferenciadas, gerando vendas imediatas a custo zero.",
+        "Reative periodicamente contatos que receberam propostas nos últimos 6 meses com novas condições, gerando vendas imediatas a custo zero.",
     },
   },
   {
-    id: 8,
-    category: "Métricas de Conversão",
-    q: "Você sabe quantas oportunidades sua empresa precisa gerar para conquistar 10 novos clientes?",
+    id: 5,
+    category: "Mensuração & Vendas",
+    q: "Você sabe quais ações de marketing geram vendas?",
     options: [
-      "Não faço ideia",
-      "Tenho uma estimativa",
-      "Temos alguns números",
-      "Sim, acompanhamos nossa conversão",
+      "Não sabemos",
+      "Temos apenas uma estimativa",
+      "Acompanhamos alguns indicadores",
+      "Sim, medimos investimento e vendas",
     ],
     impactWeight: 8,
     deficiencyAction: {
-      title: "Mapeie sua taxa de conversão",
+      title: "Comece acompanhando 4 números fundamentais",
       description:
-        "Descubra quantas oportunidades precisam entrar para fechar 1 venda. Sem essa métrica, qualquer meta financeira da empresa é apenas um palpite.",
+        "Acompanhe oportunidades geradas → orçamentos/reuniões → vendas fechadas → faturamento. Saiba exatamente de onde vem o retorno financeiro.",
     },
     intermediateAction: {
-      title: "Acompanhe as taxas por etapa do funil",
-      description:
-        "Mensure semanalmente a taxa de passagem entre primeiro contato, proposta enviada e fechamento para eliminar o gargalo restritivo.",
-    },
-    advancedAction: {
-      title: "Eleve a taxa de conversão da equipe",
-      description:
-        "Identifique padrões de abordagem dos melhores fechamentos e replique o método para aumentar a eficiência média de todo o time comercial.",
-    },
-  },
-  {
-    id: 9,
-    category: "Gestão Financeira do Marketing",
-    q: "Hoje você consegue saber quanto investiu em marketing e quanto isso gerou em vendas?",
-    options: [
-      "Não",
-      "Apenas parcialmente",
-      "Temos uma boa noção",
-      "Sim, acompanhamos esses números",
-    ],
-    impactWeight: 8,
-    deficiencyAction: {
-      title: "Comece acompanhando 4 números",
-      description:
-        "Acompanhe oportunidades → orçamentos/reuniões → vendas → faturamento.",
-    },
-    intermediateAction: {
-      title: "Isole o ROI de cada canal de aquisição",
+      title: "Isole o ROI de cada ação de marketing",
       description:
         "Separe o retorno gerado por anúncios, indicações e orgânico para saber exatamente onde cada real investido traz o maior lucro.",
     },
     advancedAction: {
       title: "Acompanhe LTV e tempo de retorno do CAC",
       description:
-        "Calcule o valor total que cada cliente gera ao longo do tempo (LTV) e o tempo de retorno do investimento para acelerar a escala com segurança.",
-    },
-  },
-  {
-    id: 10,
-    category: "Estratégia & Previsibilidade",
-    q: "Se sua meta fosse aumentar o faturamento em 30% nos próximos 90 dias, você saberia exatamente quais ações tomar?",
-    options: [
-      "Não",
-      "Teríamos que testar algumas coisas",
-      "Temos uma estratégia, mas falta previsibilidade",
-      "Sim, sabemos quais canais e números precisamos movimentar",
-    ],
-    impactWeight: 7,
-    deficiencyAction: {
-      title: "Transforme sua meta em números",
-      description:
-        "Parta da meta de vendas e calcule quantas oportunidades e orçamentos são necessários para alcançá-la.",
-    },
-    intermediateAction: {
-      title: "Desenhe um plano tático de 90 dias",
-      description:
-        "Divida sua meta de vendas em metas semanais de geração de leads e ações comerciais claras, alinhando toda a operação em torno do mesmo objetivo.",
-    },
-    advancedAction: {
-      title: "Destrave o gargalo principal da empresa",
-      description:
-        "Isole a restrição primária do negócio (volume de leads vs taxa de conversão) e concentre recursos onde o retorno marginal for mais rápido.",
+        "Calcule o valor gerado por cliente ao longo do tempo (LTV) e o tempo de retorno do investimento para acelerar a escala com segurança.",
     },
   },
 ];
@@ -412,10 +277,10 @@ function Index() {
     const list = QUESTIONS.map((q, idx) => {
       const a = answers[idx];
       const pts = a !== null ? POINTS[a] : 0;
-      const action = pts <= 3 ? q.deficiencyAction : pts === 7 ? q.intermediateAction : q.advancedAction;
+      const action = pts <= 6 ? q.deficiencyAction : pts === 14 ? q.intermediateAction : q.advancedAction;
       return { questionId: q.id, category: q.category, points: pts, impactWeight: q.impactWeight, ...action };
     });
-    list.sort((a, b) => a.points !== b.points ? a.points - b.points : b.impactWeight - a.impactWeight);
+    list.sort((a, b) => (a.points !== b.points ? a.points - b.points : b.impactWeight - a.impactWeight));
     return list.slice(0, 3);
   }, [answers]);
 
@@ -426,12 +291,19 @@ function Index() {
     const t1 = setTimeout(() => setAnalyzingPhase(1), 600);
     const t2 = setTimeout(() => setAnalyzingPhase(2), 1200);
     const t3 = setTimeout(() => setStep("result"), 1900);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [step]);
 
   // Animação do score (ease-out cubic)
   useEffect(() => {
-    if (step !== "result") { setDisplayScore(0); return; }
+    if (step !== "result") {
+      setDisplayScore(0);
+      return;
+    }
     let raf: number;
     const start = performance.now();
     const dur = 1400;
@@ -445,16 +317,16 @@ function Index() {
   }, [step, score]);
 
   const handleSelectOption = (i: number) => {
-    setAnswers(prev => prev.map((v, idx) => idx === current ? i : v));
+    setAnswers((prev) => prev.map((v, idx) => (idx === current ? i : v)));
   };
 
   const nextQuestion = () => {
-    if (current < QUESTIONS.length - 1) setCurrent(c => c + 1);
+    if (current < QUESTIONS.length - 1) setCurrent((c) => c + 1);
     else setStep("lead");
   };
 
   const prevQuestion = () => {
-    if (current > 0) setCurrent(c => c - 1);
+    if (current > 0) setCurrent((c) => c - 1);
     else setStep("intro");
   };
 
@@ -481,7 +353,10 @@ function Index() {
     e.preventDefault();
     if (!leadValid || isSubmitting || submissionLock.current) return;
     setSubmitError(null);
-    if (leadSubmitted) { setStep("analyzing"); return; }
+    if (leadSubmitted) {
+      setStep("analyzing");
+      return;
+    }
 
     setIsSubmitting(true);
     submissionLock.current = true;
@@ -559,7 +434,6 @@ function Index() {
   /* ─────────────────────── render ─────────────────────── */
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFB] text-[#09090B] selection:bg-[#0052FF]/20">
-
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-30 w-full border-b border-zinc-200 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-5">
@@ -586,32 +460,30 @@ function Index() {
 
       {/* ── MAIN ── */}
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10 sm:py-16">
-
         {/* ══════════════ INTRO ══════════════ */}
         {step === "intro" && (
           <section className="animate-rise">
             {/* Badge */}
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[#0052FF]/20 bg-[#0052FF]/8 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
-              10 perguntas&nbsp;•&nbsp;3 minutos&nbsp;•&nbsp;Gratuito
+              5 perguntas&nbsp;•&nbsp;Menos de 1 minuto&nbsp;•&nbsp;Gratuito
             </div>
 
             {/* Headline */}
             <h1 className="mt-6 text-[1.75rem] font-extrabold leading-[1.18] tracking-tight text-[#09090B] sm:text-5xl sm:leading-[1.1]">
-              Sua empresa está preparada para{" "}
-              <span className="text-[#0052FF]">vender mais</span> pelo digital?
+              Descubra o que está travando as vendas da sua empresa no digital.
             </h1>
 
             {/* Subheadline */}
             <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg">
-              Descubra o nível de maturidade digital do seu negócio, identifique o que pode estar limitando suas vendas e receba 3 ações práticas para melhorar seus resultados.
+              Responda 5 perguntas e receba seu Score Digital e 3 ações práticas em menos de 1 minuto.
             </p>
 
             {/* Benefícios */}
             <ul className="mt-7 space-y-3">
               {[
                 "Score digital de 0 a 100 baseado nas respostas do seu negócio",
-                "Identificação dos principais gargalos de Marketing, Aquisição e Comercial",
-                "Plano com 3 ações práticas e personalizadas para aumentar vendas",
+                "Identificação dos principais gargalos de aquisição e vendas",
+                "Plano com 3 ações práticas e personalizadas para melhorar seus resultados",
               ].map((b) => (
                 <li key={b} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#0052FF]/25 bg-[#0052FF]/8">
@@ -626,9 +498,9 @@ function Index() {
             <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <button
                 onClick={() => setStep("quiz")}
-                className="w-full rounded-xl bg-[#0052FF] px-8 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition-all duration-200 hover:bg-[#0047E0] hover:shadow-lg hover:shadow-[#0052FF]/25 active:scale-[0.98] sm:w-auto"
+                className="w-full rounded-xl bg-[#0052FF] px-8 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition-all duration-200 hover:bg-[#0047E0] hover:shadow-lg hover:shadow-[#0052FF]/25 active:scale-[0.98] sm:w-auto cursor-pointer"
               >
-                COMEÇAR MEU DIAGNÓSTICO →
+                DESCOBRIR MEU SCORE →
               </button>
               <p className="text-xs text-zinc-400">Sem compromisso. Resultado ao finalizar.</p>
             </div>
@@ -678,7 +550,7 @@ function Index() {
                       type="button"
                       onClick={() => handleSelectOption(i)}
                       className={[
-                        "group flex w-full items-start gap-4 rounded-xl border px-4 py-3.5 text-left transition-all duration-150",
+                        "group flex w-full items-start gap-4 rounded-xl border px-4 py-3.5 text-left transition-all duration-150 cursor-pointer",
                         active
                           ? "border-[#0052FF] bg-[#0052FF]/5 ring-2 ring-[#0052FF]/20"
                           : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50",
@@ -713,7 +585,7 @@ function Index() {
               <button
                 type="button"
                 onClick={prevQuestion}
-                className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition duration-150 hover:bg-zinc-50 active:scale-[0.98]"
+                className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition duration-150 hover:bg-zinc-50 active:scale-[0.98] cursor-pointer"
               >
                 ← Voltar
               </button>
@@ -721,7 +593,7 @@ function Index() {
                 type="button"
                 onClick={nextQuestion}
                 disabled={selected === null}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#09090B] px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-150 hover:bg-[#0052FF] disabled:cursor-not-allowed disabled:opacity-30 active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#09090B] px-5 py-3 text-sm font-semibold text-white shadow-sm transition duration-150 hover:bg-[#0052FF] disabled:cursor-not-allowed disabled:opacity-30 active:scale-[0.98] cursor-pointer"
               >
                 <span>{current === QUESTIONS.length - 1 ? "Ver meu resultado" : "Continuar"}</span>
                 <span>→</span>
@@ -792,18 +664,23 @@ function Index() {
                 <button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={() => { setCurrent(QUESTIONS.length - 1); setStep("quiz"); }}
-                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+                  onClick={() => {
+                    setCurrent(QUESTIONS.length - 1);
+                    setStep("quiz");
+                  }}
+                  className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50 cursor-pointer"
                 >
                   ← Voltar
                 </button>
                 <button
                   type="submit"
                   disabled={!leadValid || isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98] sm:text-base"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98] sm:text-base cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <><SpinnerIcon /> Salvando…</>
+                    <>
+                      <SpinnerIcon /> Salvando…
+                    </>
                   ) : (
                     <>Ver meu Score Digital →</>
                   )}
@@ -950,7 +827,7 @@ function Index() {
               <button
                 type="button"
                 onClick={restart}
-                className="text-xs font-semibold text-zinc-400 underline underline-offset-4 transition hover:text-zinc-700"
+                className="text-xs font-semibold text-zinc-400 underline underline-offset-4 transition hover:text-zinc-700 cursor-pointer"
               >
                 Refazer diagnóstico
               </button>
