@@ -427,9 +427,9 @@ function Index() {
   };
 
   const whatsappUrl = useMemo(() => {
-    const msg = `Olá! Realizei o Diagnóstico Digital Stratto para a empresa *${lead.empresa.trim()}* e nosso resultado foi *${score}/100* (${classification.label}).\n\nGostaria de agendar uma análise estratégica da minha empresa.`;
-    return `https://wa.me/5511999999999?text=${encodeURIComponent(msg)}`;
-  }, [lead.empresa, score, classification.label]);
+    const msg = "Olá! Acabei de fazer o Diagnóstico Digital Stratto e gostaria de receber meu plano de ação para minha empresa.";
+    return `https://wa.me/5548984480042?text=${encodeURIComponent(msg)}`;
+  }, []);
 
   /* ─────────────────────── render ─────────────────────── */
   return (
@@ -789,36 +789,54 @@ function Index() {
               </div>
             </div>
 
-            {/* CTA Stratto */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-              <div className="space-y-3">
-                <p className="text-base font-bold leading-snug text-[#09090B] sm:text-lg">
-                  Seu Score mostra onde sua empresa está.<br className="hidden sm:inline" />
-                  {" "}Agora podemos mostrar como chegar ao próximo nível.
-                </p>
-                <p className="text-sm leading-relaxed text-zinc-600 sm:text-base">
-                  A Stratto estrutura{" "}
-                  <strong className="font-semibold text-zinc-900">Marketing, Aquisição e Comercial</strong>{" "}
-                  para transformar investimento em vendas.
-                </p>
-              </div>
+            {/* Card Instagram Stratto */}
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative flex h-13 w-13 shrink-0 items-center justify-center rounded-full p-[2.5px] bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#09090B] text-white">
+                      <span className="text-xs font-black tracking-tighter">ST</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-base font-bold text-[#09090B]">Stratto</h4>
+                      <svg className="h-4 w-4 text-[#0052FF]" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-xs font-medium text-zinc-500">@strattooficial</p>
+                  </div>
+                </div>
 
-              <div className="my-5 rounded-xl border-l-4 border-[#0052FF] bg-blue-50/60 p-4">
-                <p className="text-base font-bold italic text-[#09090B] sm:text-lg">
-                  "Marketing sem vendas é vaidade."
-                </p>
+                <a
+                  href="https://www.instagram.com/strattooficial/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs sm:text-sm font-semibold text-zinc-700 transition duration-150 hover:bg-zinc-100 hover:border-zinc-300 active:scale-[0.98]"
+                >
+                  <svg className="h-4 w-4 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                  <span>Ver Instagram</span>
+                </a>
               </div>
+            </div>
 
+            {/* Botão Azul Principal WhatsApp */}
+            <div className="space-y-3">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-6 py-4 text-sm font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] hover:shadow-lg active:scale-[0.99] sm:text-base"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0052FF] px-6 py-4 text-sm sm:text-base font-bold tracking-wide text-white shadow-md shadow-[#0052FF]/20 transition duration-150 hover:bg-[#0047E0] hover:shadow-lg active:scale-[0.99]"
               >
-                QUERO UMA ANÁLISE DA MINHA EMPRESA →
+                RECEBER MEU PLANO DE AÇÃO →
               </a>
-              <p className="mt-3 text-center text-[11px] text-zinc-400">
-                Converse diretamente com um estrategista da Stratto pelo WhatsApp.
+              <p className="text-center text-[11px] text-zinc-400">
+                Fale diretamente com um estrategista da Stratto pelo WhatsApp.
               </p>
             </div>
 
